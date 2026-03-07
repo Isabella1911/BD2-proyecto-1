@@ -302,7 +302,7 @@ async function main() {
     calcularPromedios(restaurantes, resenias);
 
     const total = restaurantes.length + usuarios.length + articulos.length + ordenes.length + resenias.length;
-    console.log(`✅ Generados ${total.toLocaleString()} documentos en total:\n`);
+    console.log(`   Generados ${total.toLocaleString()} documentos en total:\n`);
     console.log(`   restaurantes : ${restaurantes.length}`);
     console.log(`   usuarios     : ${usuarios.length}`);
     console.log(`   articulos    : ${articulos.length}`);
@@ -310,24 +310,24 @@ async function main() {
     console.log(`   resenias     : ${resenias.length}\n`);
 
     // 2. Insertar
-    console.log("📤 Insertando restaurantes...");
+    console.log(" Insertando restaurantes...");
     await insertarEnBatches(db.collection("restaurantes"), restaurantes);
 
-    console.log("📤 Insertando usuarios...");
+    console.log(" Insertando usuarios...");
     await insertarEnBatches(db.collection("usuarios"), usuarios);
 
-    console.log("📤 Insertando articulos...");
+    console.log(" Insertando articulos...");
     await insertarEnBatches(db.collection("articulos"), articulos);
 
-    console.log("📤 Insertando ordenes...");
+    console.log(" Insertando ordenes...");
     await insertarEnBatches(db.collection("ordenes"), ordenes, 1000);
 
-    console.log("📤 Insertando resenias...");
+    console.log(" Insertando resenias...");
     await insertarEnBatches(db.collection("resenias"), resenias);
 
-    console.log(`\n🎉 ¡Inserción completada! ${total.toLocaleString()} documentos en la base "${DB_NAME}".`);
+    console.log(`\n Inserción completada, ${total.toLocaleString()} documentos en la base "${DB_NAME}".`);
   } catch (err) {
-    console.error("\n❌ Error:", err.message);
+    console.error("\n Error:", err.message);
     process.exit(1);
   } finally {
     await client.close();
