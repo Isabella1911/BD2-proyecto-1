@@ -1,6 +1,5 @@
 // =====================================================
 // Proyecto 01 - MongoDB | Setup Principal
-// Corre todos los scripts de inicialización en orden
 // =====================================================
 
 const { MongoClient } = require("mongodb");
