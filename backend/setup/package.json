@@ -1,0 +1,12 @@
+{
+  "name": "proyecto01-mongodb-setup",
+  "version": "1.0.0",
+  "description": "Setup de colecciones e índices - Proyecto 01 MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "setup": "node index.js"
+  },
+  "dependencies": {
+    "mongodb": "^6.0.0"
+  }
+}
