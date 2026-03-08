@@ -1,0 +1,77 @@
+export const orders = [
+  {
+    id: 1,
+    usuario_id: 1,
+    restaurante_id: 2,
+    restaurante_nombre: "Pizza House",
+    fecha_pedido: "2026-03-07 18:30",
+    estado: "entregado",
+    monto_total: 120,
+    direccion_entrega: "Zona 10, Ciudad de Guatemala",
+    metodo_pago: "Tarjeta",
+    items: [
+      {
+        articulo_id: 201,
+        nombre: "Pizza Pepperoni",
+        precio_unitario: 80,
+        cantidad: 1,
+      },
+      {
+        articulo_id: 202,
+        nombre: "Pan con ajo",
+        precio_unitario: 20,
+        cantidad: 2,
+      },
+    ],
+  },
+  {
+    id: 2,
+    usuario_id: 1,
+    restaurante_id: 1,
+    restaurante_nombre: "Sazón Chapina",
+    fecha_pedido: "2026-03-06 12:15",
+    estado: "en camino",
+    monto_total: 75,
+    direccion_entrega: "Zona 15, Ciudad de Guatemala",
+    metodo_pago: "Efectivo",
+    items: [
+      {
+        articulo_id: 101,
+        nombre: "Pepián",
+        precio_unitario: 45,
+        cantidad: 1,
+      },
+      {
+        articulo_id: 102,
+        nombre: "Tamalito",
+        precio_unitario: 15,
+        cantidad: 2,
+      },
+    ],
+  },
+  {
+    id: 3,
+    usuario_id: 1,
+    restaurante_id: 3,
+    restaurante_nombre: "Sushi Wave",
+    fecha_pedido: "2026-03-05 20:00",
+    estado: "pendiente",
+    monto_total: 140,
+    direccion_entrega: "Zona 16, Ciudad de Guatemala",
+    metodo_pago: "Tarjeta",
+    items: [
+      {
+        articulo_id: 301,
+        nombre: "Combo Sushi Roll",
+        precio_unitario: 95,
+        cantidad: 1,
+      },
+      {
+        articulo_id: 302,
+        nombre: "Té frío",
+        precio_unitario: 15,
+        cantidad: 3,
+      },
+    ],
+  },
+];
