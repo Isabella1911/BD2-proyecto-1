@@ -4,7 +4,12 @@
   "description": "Setup de colecciones e índices - Proyecto 01 MongoDB",
   "main": "index.js",
   "scripts": {
-    "setup": "node index.js"
+    "setup": "node index.js",
+    "seed": "node seed.js",
+    "indexes": "node create-indexes.js",
+    "images": "node gridfs-images.js",
+    "setup:seed": "node index.js && node seed.js",
+    "setup:all": "node index.js && node seed.js && node create-indexes.js && node gridfs-images.js"
   },
   "dependencies": {
     "mongodb": "^6.0.0"

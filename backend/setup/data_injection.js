@@ -3,6 +3,7 @@
 // =====================================================
 
 const { MongoClient } = require("mongodb");
+
 require('dotenv').config({ path: '../../.env' });
 
 const URI = process.env.MONGO_URI;
@@ -112,6 +113,7 @@ function generarRestaurantes() {
       articulos_ids: [],           // se llenará después de generar artículos
       fecha_registro: randDate(new Date("2020-01-01"), new Date("2023-12-31")),
       imagen_url: `https://ejemplo.com/imagenes/rest${pad(i + 1)}.jpg`,
+      gridfs_imagen_id: null, // se llena con gridfs-images.js
     };
   });
 }
@@ -144,6 +146,7 @@ function generarArticulos(restaurantes) {
   const articulosPorRest = {};
   let idx = 0;
 
+  // Distribuir artículos entre restaurantes (10-14 por restaurante)
   for (const rest of restaurantes) {
     const cantidad = randInt(10, 14);
     articulosPorRest[rest._id] = [];
@@ -159,12 +162,14 @@ function generarArticulos(restaurantes) {
         descripcion: `Delicioso platillo preparado con ingredientes frescos de temporada.`,
         precio: randFloat(5.0, 85.0),
         categoria,
-        disponible: Math.random() > 0.1,
+        disponible: Math.random() > 0.1, // 90% disponibles
         imagen_url: `https://ejemplo.com/imagenes/art${pad(idx + 1)}.jpg`,
+        gridfs_imagen_id: null, // se llena con gridfs-images.js
       });
     }
   }
 
+  // Actualizar articulos_ids en restaurantes
   for (const rest of restaurantes) {
     rest.articulos_ids = articulosPorRest[rest._id] || [];
   }
@@ -283,55 +288,46 @@ async function insertarEnBatches(col, docs, batchSize = 500) {
   console.log();
 }
 
-// ── Main ──────────────────────────────────────────────
-async function main() {
-  const client = new MongoClient(URI);
+// ── Función exportable (usada por index.js) ───────────
+async function seedAll(db) {
+  console.log("     Generando datos...");
+  const restaurantes = generarRestaurantes();
+  const usuarios     = generarUsuarios();
+  const articulos    = generarArticulos(restaurantes);
+  const ordenes      = generarOrdenes(usuarios, restaurantes, articulos);
+  const resenias     = generarResenias(usuarios, restaurantes, ordenes);
+  calcularPromedios(restaurantes, resenias);
 
-  try {
-    await client.connect();
-    console.log("✅ Conectado a MongoDB\n");
-    const db = client.db(DB_NAME);
+  const total = restaurantes.length + usuarios.length + articulos.length + ordenes.length + resenias.length;
+  console.log(`     Generados ${total.toLocaleString()} documentos:\n`);
+  console.log(`     restaurantes : ${restaurantes.length}`);
+  console.log(`     usuarios     : ${usuarios.length}`);
+  console.log(`     articulos    : ${articulos.length}`);
+  console.log(`     ordenes      : ${ordenes.length}`);
+  console.log(`     resenias     : ${resenias.length}\n`);
 
-    // 1. Generar datos
-    console.log("🔧 Generando datos...");
-    const restaurantes = generarRestaurantes();
-    const usuarios = generarUsuarios();
-    const articulos = generarArticulos(restaurantes); // también actualiza articulos_ids
-    const ordenes = generarOrdenes(usuarios, restaurantes, articulos);
-    const resenias = generarResenias(usuarios, restaurantes, ordenes);
-    calcularPromedios(restaurantes, resenias);
+  console.log("  Insertando restaurantes...");
+  await insertarEnBatches(db.collection("restaurantes"), restaurantes);
+  console.log("  Insertando usuarios...");
+  await insertarEnBatches(db.collection("usuarios"), usuarios);
+  console.log("  Insertando articulos...");
+  await insertarEnBatches(db.collection("articulos"), articulos);
+  console.log("  Insertando ordenes...");
+  await insertarEnBatches(db.collection("ordenes"), ordenes, 1000);
+  console.log("  Insertando resenias...");
+  await insertarEnBatches(db.collection("resenias"), resenias);
 
-    const total = restaurantes.length + usuarios.length + articulos.length + ordenes.length + resenias.length;
-    console.log(`   Generados ${total.toLocaleString()} documentos en total:\n`);
-    console.log(`   restaurantes : ${restaurantes.length}`);
-    console.log(`   usuarios     : ${usuarios.length}`);
-    console.log(`   articulos    : ${articulos.length}`);
-    console.log(`   ordenes      : ${ordenes.length}`);
-    console.log(`   resenias     : ${resenias.length}\n`);
-
-    // 2. Insertar
-    console.log(" Insertando restaurantes...");
-    await insertarEnBatches(db.collection("restaurantes"), restaurantes);
-
-    console.log(" Insertando usuarios...");
-    await insertarEnBatches(db.collection("usuarios"), usuarios);
-
-    console.log(" Insertando articulos...");
-    await insertarEnBatches(db.collection("articulos"), articulos);
-
-    console.log(" Insertando ordenes...");
-    await insertarEnBatches(db.collection("ordenes"), ordenes, 1000);
-
-    console.log(" Insertando resenias...");
-    await insertarEnBatches(db.collection("resenias"), resenias);
-
-    console.log(`\n Inserción completada, ${total.toLocaleString()} documentos en la base "${DB_NAME}".`);
-  } catch (err) {
-    console.error("\n Error:", err.message);
-    process.exit(1);
-  } finally {
-    await client.close();
-  }
+  console.log(`\n  Inserción completada: ${total.toLocaleString()} documentos.`);
 }
 
-main();
+module.exports = { seedAll };
+
+// ── Standalone (node data_injection.js) ──────────────
+if (require.main === module) {
+  const { MongoClient: MC } = require("mongodb");
+  const client = new MC(URI);
+  client.connect()
+    .then(() => seedAll(client.db(DB_NAME)))
+    .then(() => { console.log("\n Done."); client.close(); })
+    .catch(err => { console.error(err.message); process.exit(1); });
+}
