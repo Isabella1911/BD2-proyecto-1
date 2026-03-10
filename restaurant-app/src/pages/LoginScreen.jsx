@@ -1,23 +1,24 @@
-// =====================================================
-// Componente: LoginScreen
-// Archivo nuevo: src/pages/LoginScreen.jsx
-// Se muestra cuando no hay currentUser
-// =====================================================
-
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function LoginScreen() {
   const { login, loginError, isLoading } = useAuth();
   const [email, setEmail] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async () => {
     if (!email.trim()) return;
     await login(email.trim());
+    navigate("/");
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSubmit();
+  };
+
+  const handleAdminLogin = () => {
+    navigate("/admin");
   };
 
   return (
@@ -40,7 +41,6 @@ function LoginScreen() {
           maxWidth: "420px",
         }}
       >
-        {/* Logo / Título */}
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
           <h1 style={{ color: "var(--color-primary)", marginBottom: "0.25rem" }}>
             🍽️ FoodApp
@@ -50,7 +50,6 @@ function LoginScreen() {
           </p>
         </div>
 
-        {/* Campo de email */}
         <div style={{ marginBottom: "1rem" }}>
           <label
             style={{
@@ -80,7 +79,6 @@ function LoginScreen() {
           />
         </div>
 
-        {/* Error */}
         {loginError && (
           <p
             style={{
@@ -93,7 +91,6 @@ function LoginScreen() {
           </p>
         )}
 
-        {/* Botón */}
         <button
           onClick={handleSubmit}
           disabled={isLoading || !email.trim()}
@@ -113,6 +110,24 @@ function LoginScreen() {
           }}
         >
           {isLoading ? "Buscando..." : "Entrar"}
+        </button>
+
+        <button
+          onClick={handleAdminLogin}
+          style={{
+            width: "100%",
+            padding: "0.9rem",
+            marginTop: "0.8rem",
+            backgroundColor: "transparent",
+            color: "var(--color-primary)",
+            border: "2px solid var(--color-primary)",
+            borderRadius: "var(--radius-md)",
+            fontWeight: "bold",
+            fontSize: "1rem",
+            cursor: "pointer",
+          }}
+        >
+          Entrar como Admin
         </button>
 
         <p
