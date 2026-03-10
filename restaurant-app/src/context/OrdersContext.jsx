@@ -4,7 +4,7 @@
 // =====================================================
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { currentUser } from "../data/currentUser";
+import { useAuth } from "./AuthContext";
 import {
   createOrder as createOrderApi,
   getOrdersByUserId,
@@ -13,10 +13,11 @@ import {
 const OrdersContext = createContext();
 
 export function OrdersProvider({ children }) {
-  const [orders, setOrders] = useState([]);
+  const { currentUser } = useAuth();
+  const [orders, setOrders]     = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Carga las órdenes del usuario al montar
+  // Carga las órdenes del usuario al montar (currentUser ya existe aquí)
   useEffect(() => {
     async function loadOrders() {
       try {
@@ -29,9 +30,8 @@ export function OrdersProvider({ children }) {
       }
     }
     loadOrders();
-  }, []);
+  }, [currentUser.id]);
 
-  // Crea una orden en MongoDB y la agrega al estado local
   const createOrder = async ({
     restaurante_id,
     restaurante_nombre,
@@ -50,16 +50,15 @@ export function OrdersProvider({ children }) {
       metodo_pago,
     });
 
-    // Normaliza para que el frontend lo consuma igual que antes
     const normalized = {
       id: newOrder._id,
       usuario_id: currentUser.id,
-      restaurantId: restaurante_id,
-      restaurant: restaurante_nombre,
-      date: newOrder.fecha_pedido,
-      total: monto_total,
-      status: "pendiente",
-      items: items.map((i) => i.nombre),
+      restaurante_id,
+      restaurante_nombre,
+      fecha_pedido: newOrder.fecha_pedido,
+      monto_total,
+      estado: "Pendiente",
+      items: items,
     };
 
     setOrders((prev) => [normalized, ...prev]);
