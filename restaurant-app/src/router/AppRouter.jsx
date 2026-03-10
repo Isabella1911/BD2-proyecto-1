@@ -3,7 +3,7 @@ import MainLayout from "../Layouts/MainLayout";
 import Home from "../pages/Home";
 import Rankings from "../pages/Rankings";
 import History from "../pages/History";
-import Settings from "../pages/Settings";
+
 import RestaurantDetails from "../pages/RestaurantDetails";
 import OrderDetails from "../pages/OrderDetails";
 import Cart from "../pages/Cart";
@@ -54,7 +54,6 @@ function AppRouter() {
           <Route index element={<Home />} />
           <Route path="rankings" element={<Rankings />} />
           <Route path="history" element={<History />} />
-          <Route path="settings" element={<Settings />} />
           <Route path="restaurants/:id" element={<RestaurantDetails />} />
           <Route path="orders/:id" element={<OrderDetails />} />
           <Route path="cart" element={<Cart />} />

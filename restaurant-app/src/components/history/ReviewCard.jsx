@@ -34,7 +34,7 @@ function ReviewCard({ review }) {
             height: 'fit-content',
           }}
         >
-          {'⭐'.repeat(review.rating)}
+          {'★'.repeat(review.rating)}
         </span>
       </div>
 

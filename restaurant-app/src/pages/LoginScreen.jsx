@@ -43,7 +43,7 @@ function LoginScreen() {
       >
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
           <h1 style={{ color: "var(--color-primary)", marginBottom: "0.25rem" }}>
-            🍽️ FoodApp
+             Comidas Rapidas
           </h1>
           <p style={{ color: "var(--color-muted)" }}>
             Ingresa tu email para continuar

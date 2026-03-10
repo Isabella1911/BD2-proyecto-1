@@ -51,7 +51,7 @@ function RestaurantCard({ restaurant }) {
               whiteSpace: "nowrap",
             }}
           >
-            ⭐ {restaurant.rating}
+            ★ {restaurant.rating}
           </span>
         </div>
 
@@ -66,11 +66,11 @@ function RestaurantCard({ restaurant }) {
         </p>
 
         <p style={{ lineHeight: 1.5, marginBottom: "0.5rem" }}>
-          📍 {restaurant.address}
+          ! {restaurant.address}
         </p>
 
         <p style={{ lineHeight: 1.5, marginBottom: "1rem" }}>
-          🕒 {restaurant.deliveryTime}
+           {restaurant.deliveryTime}
         </p>
 
         <button
