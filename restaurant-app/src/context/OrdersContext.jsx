@@ -1,17 +1,38 @@
-import { createContext, useContext, useMemo, useState } from "react";
-import { orders as initialOrders } from "../data/ordersMockData";
+// =====================================================
+// Context: Órdenes
+// Reemplaza: src/context/OrdersContext.jsx
+// =====================================================
+
+import { createContext, useContext, useEffect, useState } from "react";
 import { currentUser } from "../data/currentUser";
+import {
+  createOrder as createOrderApi,
+  getOrdersByUserId,
+} from "../services/orderService";
 
 const OrdersContext = createContext();
 
 export function OrdersProvider({ children }) {
-  const [orders, setOrders] = useState(initialOrders);
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const userOrders = useMemo(() => {
-    return orders.filter((order) => order.usuario_id === currentUser.id);
-  }, [orders]);
+  // Carga las órdenes del usuario al montar
+  useEffect(() => {
+    async function loadOrders() {
+      try {
+        const data = await getOrdersByUserId(currentUser.id);
+        setOrders(data);
+      } catch (err) {
+        console.error("Error al cargar órdenes:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadOrders();
+  }, []);
 
-  const createOrder = ({
+  // Crea una orden en MongoDB y la agrega al estado local
+  const createOrder = async ({
     restaurante_id,
     restaurante_nombre,
     items,
@@ -19,36 +40,38 @@ export function OrdersProvider({ children }) {
     direccion_entrega,
     metodo_pago,
   }) => {
-    const newOrder = {
-      id: Date.now(),
+    const newOrder = await createOrderApi({
       usuario_id: currentUser.id,
       restaurante_id,
       restaurante_nombre,
-      fecha_pedido: new Date().toLocaleString("es-GT"),
-      estado: "pendiente",
+      items,
       monto_total,
       direccion_entrega,
       metodo_pago,
-      items: items.map((item) => ({
-        articulo_id: item.articulo_id,
-        nombre: item.nombre,
-        precio_unitario: item.precio_unitario,
-        cantidad: item.cantidad,
-      })),
+    });
+
+    // Normaliza para que el frontend lo consuma igual que antes
+    const normalized = {
+      id: newOrder._id,
+      usuario_id: currentUser.id,
+      restaurantId: restaurante_id,
+      restaurant: restaurante_nombre,
+      date: newOrder.fecha_pedido,
+      total: monto_total,
+      status: "pendiente",
+      items: items.map((i) => i.nombre),
     };
 
-    setOrders((prev) => [newOrder, ...prev]);
-    return newOrder;
+    setOrders((prev) => [normalized, ...prev]);
+    return normalized;
   };
 
-  const value = {
-    orders,
-    userOrders,
-    createOrder,
-  };
+  const userOrders = orders.filter(
+    (order) => order.usuario_id === currentUser.id
+  );
 
   return (
-    <OrdersContext.Provider value={value}>
+    <OrdersContext.Provider value={{ orders, userOrders, createOrder, isLoading }}>
       {children}
     </OrdersContext.Provider>
   );

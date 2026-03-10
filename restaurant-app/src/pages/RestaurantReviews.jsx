@@ -1,114 +1,99 @@
-import { useMemo, useState, useEffect } from "react";
+// =====================================================
+// Página: Reseñas de un Restaurante
+// Actualiza: src/pages/RestaurantReviews.jsx
+// Cambio: paginación y sort vienen del backend ahora
+// =====================================================
+
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
 import Pagination from "../components/common/Pagination";
 import ReviewList from "../components/reviews/ReviewList";
 import ReviewSortFilter from "../components/reviews/ReviewSortFilter";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useReviews } from "../context/ReviewsContext";
 import { getRestaurantById } from "../services/restaurantService";
 
 function RestaurantReviews() {
   const { id } = useParams();
-
-  const {
-    getReviewsByRestaurantId,
-    getAverageRatingByRestaurantId,
-    getReviewsCountByRestaurantId,
-  } = useReviews();
+  const { fetchReviewsByRestaurantId } = useReviews();
 
   const [restaurant, setRestaurant] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortType, setSortType] = useState("recent");
+  const [isLoading, setIsLoading] = useState(true);
 
   const reviewsPerPage = 25;
 
+  // Carga el restaurante una sola vez
   useEffect(() => {
-    async function loadRestaurant() {
-      const data = await getRestaurantById(id);
-      setRestaurant(data);
-    }
-
-    loadRestaurant();
+    getRestaurantById(id).then(setRestaurant);
   }, [id]);
 
-  const allReviews = useMemo(() => {
-    let reviews = [...getReviewsByRestaurantId(id)];
-
-    if (sortType === "best") {
-      reviews.sort((a, b) => b.calificacion_num - a.calificacion_num);
-    }
-
-    if (sortType === "worst") {
-      reviews.sort((a, b) => a.calificacion_num - b.calificacion_num);
-    }
-
-    if (sortType === "recent") {
-      reviews.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-    }
-
-    return reviews;
-  }, [getReviewsByRestaurantId, id, sortType]);
-
-  const averageRating = getAverageRatingByRestaurantId(id);
-  const totalReviews = getReviewsCountByRestaurantId(id);
-
-  const totalPages = Math.ceil(allReviews.length / reviewsPerPage);
-
-  const paginatedReviews = useMemo(() => {
-    const start = (currentPage - 1) * reviewsPerPage;
-    const end = start + reviewsPerPage;
-    return allReviews.slice(start, end);
-  }, [allReviews, currentPage]);
-
+  // Recarga reseñas cada vez que cambia página o sort
   useEffect(() => {
+    async function loadReviews() {
+      setIsLoading(true);
+      try {
+        const data = await fetchReviewsByRestaurantId(id, currentPage, reviewsPerPage, sortType);
+        setReviews(data.reviews);
+        setTotal(data.total);
+        setTotalPages(data.totalPages);
+      } catch (err) {
+        console.error("Error al cargar reseñas:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadReviews();
+  }, [id, currentPage, sortType]);
+
+  // Al cambiar el sort vuelve a página 1
+  const handleSortChange = (newSort) => {
+    setSortType(newSort);
     setCurrentPage(1);
-  }, [sortType, id]);
+  };
+
+  const averageRating = reviews.length
+    ? (reviews.reduce((sum, r) => sum + r.calificacion_num, 0) / reviews.length).toFixed(1)
+    : null;
 
   if (!restaurant) {
     return (
       <div className="container" style={{ padding: "2rem 0" }}>
-        <div
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderRadius: "var(--radius-lg)",
-            padding: "2rem",
-            textAlign: "center",
-            boxShadow: "var(--shadow-soft)",
-          }}
-        >
-          <h2 style={{ color: "var(--color-primary)" }}>
-            Restaurante no encontrado
-          </h2>
-        </div>
+        <LoadingSpinner text="Cargando restaurante..." />
       </div>
     );
   }
 
   return (
-    <div
-      className="container"
-      style={{
-        padding: "2rem 0",
-        maxHeight: "85vh",
-        overflowY: "auto",
-      }}
-    >
+    <div className="container" style={{ padding: "2rem 0", maxHeight: "85vh", overflowY: "auto" }}>
       <PageHeader
         title={`Reseñas de ${restaurant.name}`}
-        subtitle={`Promedio: ${
-          averageRating ? averageRating.toFixed(1) : "0.0"
-        } ⭐ · ${totalReviews} reseñas`}
+        subtitle={
+          averageRating
+            ? `Promedio: ${averageRating} ⭐ · ${total} reseñas`
+            : "Sin reseñas aún"
+        }
       />
 
-      <ReviewSortFilter sortType={sortType} onChangeSort={setSortType} />
+      <ReviewSortFilter sortType={sortType} onSortChange={handleSortChange} />
 
-      <ReviewList reviews={paginatedReviews} />
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      {isLoading ? (
+        <LoadingSpinner text="Cargando reseñas..." />
+      ) : (
+        <>
+          <ReviewList reviews={reviews} />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </>
+      )}
     </div>
   );
 }

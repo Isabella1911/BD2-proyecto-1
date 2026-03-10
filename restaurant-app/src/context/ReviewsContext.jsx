@@ -1,105 +1,138 @@
-import { createContext, useContext, useMemo, useState } from "react";
-import { reviews as initialReviews } from "../data/reviewsMockData";
+// =====================================================
+// Context: Reseñas
+// Reemplaza: src/context/ReviewsContext.jsx
+// =====================================================
+
+import { createContext, useContext, useState } from "react";
 import { currentUser } from "../data/currentUser";
+import {
+  createReview as createReviewApi,
+  deleteReview as deleteReviewApi,
+  getReviewsByRestaurantId as getReviewsApi,
+} from "../services/reviewService";
 
 const ReviewsContext = createContext();
 
 export function ReviewsProvider({ children }) {
-  const [reviews, setReviews] = useState(initialReviews);
+  // Cache local: { [restauranteId]: { reviews, total, page, totalPages } }
+  const [cache, setCache] = useState({});
 
-  const userReviews = useMemo(() => {
-    return reviews.filter((review) => review.usuario_id === currentUser.id);
-  }, [reviews]);
+  // ── Usado en RestaurantReviews.jsx ──────────────────
+  // Llama a la API y guarda en cache para no repetir la misma llamada
+  const fetchReviewsByRestaurantId = async (restaurantId, page = 1, limit = 25, sort = "recent") => {
+    const data = await getReviewsApi(restaurantId, page, limit, sort);
+    setCache((prev) => ({ ...prev, [restaurantId]: data }));
+    return data;
+  };
 
-  const createReview = ({
+  // Para compatibilidad con componentes que ya usan getReviewsByRestaurantId
+  // devuelve del cache si existe, si no devuelve array vacío
+  const getReviewsByRestaurantId = (restaurantId) => {
+    return cache[restaurantId]?.reviews || [];
+  };
+
+  const getAverageRatingByRestaurantId = (restaurantId) => {
+    const reviews = cache[restaurantId]?.reviews || [];
+    if (!reviews.length) return 0;
+    const total = reviews.reduce((sum, r) => sum + r.calificacion_num, 0);
+    return total / reviews.length;
+  };
+
+  const getReviewsCountByRestaurantId = (restaurantId) => {
+    return cache[restaurantId]?.total || 0;
+  };
+
+  const hasUserReviewedOrder = (orderId) => {
+    // Revisa en todas las reseñas cacheadas
+    return Object.values(cache).some(({ reviews }) =>
+      reviews.some(
+        (r) => r.usuario_id === currentUser.id && r.orden_id === orderId
+      )
+    );
+  };
+
+  // ── Usado en ReviewModal.jsx ─────────────────────────
+  const createReview = async ({
     restaurante_id,
     restaurante_nombre,
     orden_id = null,
     calificacion_num,
     comentario,
   }) => {
-    if (orden_id !== null) {
-      const alreadyReviewed = reviews.some(
-        (review) =>
-          review.usuario_id === currentUser.id &&
-          review.orden_id === orden_id
-      );
-
-      if (alreadyReviewed) {
-        return {
-          success: false,
-          message: "Esta orden ya fue calificada por el usuario.",
-        };
-      }
+    // Validación local: evita doble reseña por orden
+    if (orden_id !== null && hasUserReviewedOrder(orden_id)) {
+      return { success: false, message: "Esta orden ya fue calificada." };
     }
 
-    const newReview = {
-      id: Date.now(),
-      usuario_id: currentUser.id,
-      usuario_nombre: currentUser.nombre,
-      restaurante_id,
-      restaurante_nombre,
-      orden_id,
-      calificacion_num,
-      comentario,
-      fecha: new Date().toLocaleString("es-GT"),
-    };
+    try {
+      const newReview = await createReviewApi({
+        usuario_id: currentUser.id,
+        restaurante_id,
+        orden_id,
+        calificacion_num,
+        comentario,
+      });
 
-    setReviews((prev) => [newReview, ...prev]);
+      // Agrega al cache local para reflejar el cambio sin recargar
+      const normalized = {
+        id: newReview._id,
+        usuario_id: currentUser.id,
+        usuario_nombre: currentUser.nombre,
+        restaurante_id,
+        restaurante_nombre,
+        orden_id,
+        calificacion_num,
+        comentario,
+        fecha: newReview.fecha,
+      };
 
-    return {
-      success: true,
-      review: newReview,
-    };
+      setCache((prev) => {
+        const existing = prev[restaurante_id] || { reviews: [], total: 0 };
+        return {
+          ...prev,
+          [restaurante_id]: {
+            ...existing,
+            reviews: [normalized, ...existing.reviews],
+            total: existing.total + 1,
+          },
+        };
+      });
+
+      return { success: true, review: normalized };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
   };
 
-  const getAverageRatingByRestaurantId = (restaurantId) => {
-    const restaurantReviews = reviews.filter(
-      (review) => review.restaurante_id === Number(restaurantId)
-    );
+  // ── Usado en perfil de usuario ───────────────────────
+  const deleteReview = async (reviewId, restauranteId) => {
+    await deleteReviewApi(reviewId);
 
-    if (!restaurantReviews.length) return 0;
-
-    const total = restaurantReviews.reduce(
-      (sum, review) => sum + review.calificacion_num,
-      0
-    );
-
-    return total / restaurantReviews.length;
-  };
-
-  const getReviewsCountByRestaurantId = (restaurantId) => {
-    return reviews.filter(
-      (review) => review.restaurante_id === Number(restaurantId)
-    ).length;
-  };
-
-  const getReviewsByRestaurantId = (restaurantId) => {
-    return reviews
-      .filter((review) => review.restaurante_id === Number(restaurantId))
-      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-  };
-
-  const hasUserReviewedOrder = (orderId) => {
-    return reviews.some(
-      (review) =>
-        review.usuario_id === currentUser.id &&
-        review.orden_id === Number(orderId)
-    );
-  };
-
-  const value = {
-    reviews,
-    userReviews,
-    createReview,
-    getAverageRatingByRestaurantId,
-    getReviewsCountByRestaurantId,
-    getReviewsByRestaurantId,
-    hasUserReviewedOrder,
+    setCache((prev) => {
+      const existing = prev[restauranteId] || { reviews: [], total: 0 };
+      return {
+        ...prev,
+        [restauranteId]: {
+          ...existing,
+          reviews: existing.reviews.filter((r) => r.id !== reviewId),
+          total: Math.max(0, existing.total - 1),
+        },
+      };
+    });
   };
 
   return (
-    <ReviewsContext.Provider value={value}>
+    <ReviewsContext.Provider
+      value={{
+        fetchReviewsByRestaurantId,
+        getReviewsByRestaurantId,
+        getAverageRatingByRestaurantId,
+        getReviewsCountByRestaurantId,
+        hasUserReviewedOrder,
+        createReview,
+        deleteReview,
+      }}
+    >
       {children}
     </ReviewsContext.Provider>
   );
