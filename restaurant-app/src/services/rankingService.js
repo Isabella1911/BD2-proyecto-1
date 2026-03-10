@@ -1,13 +1,10 @@
 // =====================================================
 // Servicio: Rankings (Frontend)
-// Reemplaza: src/services/rankingService.js
-// Rankings.jsx importa getRankingData() desde aquí
+// Archivo: src/services/rankingService.js
 // =====================================================
 
 import { API_URL } from "./api";
 
-// Llama a los dos endpoints de stats en paralelo
-// y devuelve el formato que ya espera Rankings.jsx
 export async function getRankingData() {
   const [restaurantesRes, platillosRes] = await Promise.all([
     fetch(`${API_URL}/stats/restaurantes-top?limit=4`),
@@ -18,7 +15,19 @@ export async function getRankingData() {
   if (!platillosRes.ok) throw new Error("Error al cargar top platillos");
 
   const restaurantes = await restaurantesRes.json();
-  const platillos = await platillosRes.json();
+  const platillos    = await platillosRes.json();
+
+  // Pipeline 3: ventas mensuales del restaurante #1 del top
+  let ventasMensuales = [];
+  let restauranteNombre = "";
+  if (restaurantes.length > 0) {
+    const topId = restaurantes[0]._id;
+    restauranteNombre = restaurantes[0].nombre;
+    const ventasRes = await fetch(`${API_URL}/stats/restaurante/${topId}/ventas-mensuales`);
+    if (ventasRes.ok) {
+      ventasMensuales = await ventasRes.json();
+    }
+  }
 
   return {
     topRestaurants: restaurantes.map((r) => ({
@@ -35,5 +44,8 @@ export async function getRankingData() {
       extra: "vendidos",
       badge: "🍽️",
     })),
+    ventasMensuales,
+    restauranteNombre,
   };
 }
+

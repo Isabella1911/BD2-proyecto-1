@@ -108,19 +108,38 @@ router.get("/restaurantes/:id/ordenes/count", async (req, res) => {
 // Body: { restaurante_id, articulo_id }
 router.patch("/restaurantes/push-item", async (req, res) => {
   try {
-    const { restaurante_id, articulo_id } = req.body;
+    const { restaurante_id, nombre, descripcion, precio, categoria, disponible } = req.body;
 
-    if (!restaurante_id || !articulo_id) {
-      return res.status(400).json({ message: "Se requieren 'restaurante_id' y 'articulo_id'" });
+    if (!restaurante_id || !nombre || !precio) {
+      return res.status(400).json({ message: "Se requieren 'restaurante_id', 'nombre' y 'precio'" });
     }
 
-    const result = await addArticuloToRestaurant(restaurante_id, articulo_id);
+    const db = getDb();
+
+    // Paso 1: crear el artículo en la colección articulos
+    const newArticulo = {
+      _id: `art_${Date.now()}`,
+      restaurante_id,
+      nombre,
+      descripcion: descripcion || "",
+      precio: Number(precio),
+      categoria: categoria || "General",
+      disponible: disponible !== false,
+      gridfs_imagen_id: null,
+    };
+    await db.collection("articulos").insertOne(newArticulo);
+
+    // Paso 2: agregar la referencia al restaurante con $push
+    const result = await db.collection("restaurantes").updateOne(
+      { _id: restaurante_id },
+      { $push: { articulos_ids: newArticulo._id } }
+    );
 
     if (result.matchedCount === 0) {
       return res.status(404).json({ message: "Restaurante no encontrado" });
     }
 
-    res.json({ modifiedCount: result.modifiedCount });
+    res.status(201).json({ articulo: newArticulo, modifiedCount: result.modifiedCount });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

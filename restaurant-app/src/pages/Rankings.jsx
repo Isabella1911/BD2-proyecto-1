@@ -1,14 +1,22 @@
+// =====================================================
+// Página: Rankings
+// Archivo: src/pages/Rankings.jsx
+// =====================================================
+
 import { useEffect, useState } from 'react';
 import PageHeader from '../components/common/PageHeader';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import TopRestaurants from '../components/rankings/TopRestaurants';
 import TopDishes from '../components/rankings/TopDishes';
+import MonthlySales from '../components/rankings/Monthlysales';
 import { getRankingData } from '../services/rankingService';
 
 function Rankings() {
   const [rankingData, setRankingData] = useState({
     topRestaurants: [],
     topDishes: [],
+    ventasMensuales: [],
+    restauranteNombre: "",
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -37,14 +45,13 @@ function Rankings() {
       {isLoading ? (
         <LoadingSpinner text="Cargando rankings..." />
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gap: '2rem',
-          }}
-        >
+        <div style={{ display: 'grid', gap: '2rem' }}>
           <TopRestaurants restaurants={rankingData.topRestaurants} />
           <TopDishes dishes={rankingData.topDishes} />
+          <MonthlySales
+            data={rankingData.ventasMensuales}
+            restauranteNombre={rankingData.restauranteNombre}
+          />
         </div>
       )}
     </div>
