@@ -39,23 +39,38 @@ async function createOrder(data) {
 async function getOrdersByUserId(usuarioId) {
   const db = getDb();
 
-  return await db
-    .collection("ordenes")
-    .find(
-      { usuario_id: usuarioId },
-      {
-        projection: {
-          _id: 1,
-          restaurante_id: 1,
-          fecha_pedido: 1,
-          estado: 1,
-          monto_total: 1,
-          items: 1,
-        },
-      }
-    )
-    .sort({ fecha_pedido: -1 }) // índice: idx_ordenes_usuario_fecha
-    .toArray();
+  return await db.collection("ordenes").aggregate([
+    { $match: { usuario_id: usuarioId } },
+    { $sort: { fecha_pedido: -1 } },
+    {
+      $lookup: {
+        from: "restaurantes",
+        localField: "restaurante_id",
+        foreignField: "_id",
+        as: "restaurante_info",
+      },
+    },
+    {
+      $unwind: {
+        path: "$restaurante_info",
+        preserveNullAndEmptyArrays: true,  // por si el restaurante fue eliminado
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        usuario_id: 1,
+        restaurante_id: 1,
+        restaurante_nombre: "$restaurante_info.nombre",  // ← nombre resuelto
+        fecha_pedido: 1,
+        estado: 1,
+        monto_total: 1,
+        items: 1,
+        direccion_entrega: 1,
+        metodo_pago: 1,
+      },
+    },
+  ]).toArray();
 }
 
 // ── GET /api/ordenes/:id ──────────────────────────────

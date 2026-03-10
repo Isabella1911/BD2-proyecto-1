@@ -73,9 +73,7 @@ export function OrdersProvider({ children }) {
     return normalized;
   };
 
-  const userOrders = currentUser?.id
-    ? orders.filter((order) => order.usuario_id === currentUser.id)
-    : [];
+  const userOrders = orders;
 
   return (
     <OrdersContext.Provider

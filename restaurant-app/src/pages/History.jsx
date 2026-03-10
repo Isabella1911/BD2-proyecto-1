@@ -14,12 +14,12 @@ function History() {
   const mappedOrders = useMemo(() => {
     return userOrders.map((order) => ({
       id: order.id,
-      restaurant: order.restaurante_nombre,
-      restaurantId: order.restaurante_id,
-      date: order.fecha_pedido,
-      total: order.monto_total,
-      status: order.estado,
-      items: order.items.map((item) => item.nombre),
+      restaurant: order.restaurant,       
+      restaurantId: order.restaurantId,   
+      date: order.date,                   
+      total: order.total,                 
+      status: order.status,              
+      items: order.items,                
     }));
   }, [userOrders]);
 
