@@ -14,6 +14,7 @@ const DB_NAME = process.env.DB_NAME;
 // ── Definición de todos los índices ──────────────────
 // Estructura: { coleccion, spec, opciones, descripcion }
 const INDICES = [
+
   // ── Colección: ordenes ────────────────────────────
 
   {
@@ -27,6 +28,20 @@ const INDICES = [
     spec: { restaurante_id: 1, estado: 1, fecha_pedido: -1 },
     opciones: { name: "idx_ordenes_restaurante_estado_fecha" },
     descripcion: "Índice 2 · Pedidos por restaurante y estado (gestión de entregas y reportes mensuales).",
+  },
+
+  // ── Índice MULTIKEY ───────────────────────────────
+  // ordenes.items es un array de subdocumentos embebidos.
+  // Al indexar un campo dentro de un array, MongoDB crea
+  // automáticamente un índice Multikey — una entrada de
+  // índice por cada elemento del array.
+  // Uso: buscar todas las órdenes que contengan un platillo
+  //      específico → { "items.nombre": "Pizza Pepperoni" }
+  {
+    coleccion: "ordenes",
+    spec: { "items.nombre": 1 },
+    opciones: { name: "idx_ordenes_items_nombre_multikey" },
+    descripcion: "Multikey · Índice sobre array embebido items[].nombre — permite buscar órdenes por nombre de platillo.",
   },
 
   // ── Colección: resenias ───────────────────────────
@@ -59,6 +74,23 @@ const INDICES = [
     descripcion: "Índice 4 · Menú de un restaurante filtrado por disponibilidad y ordenado por nombre.",
   },
 
+  // ── Índice TEXT ───────────────────────────────────
+  // Permite búsqueda full-text en nombre y descripción
+  // de artículos. MongoDB tokeniza, normaliza y elimina
+  // stopwords automáticamente.
+  // Uso: db.articulos.find({ $text: { $search: "pizza" } })
+  // Nota: solo puede existir UN índice text por colección.
+  {
+    coleccion: "articulos",
+    spec: { nombre: "text", descripcion: "text" },
+    opciones: {
+      name: "idx_articulos_text_busqueda",
+      weights: { nombre: 10, descripcion: 3 }, // nombre tiene mayor relevancia
+      default_language: "spanish",
+    },
+    descripcion: "Text · Búsqueda full-text en nombre (peso 10) y descripción (peso 3) de artículos.",
+  },
+
   // ── Colección: usuarios ───────────────────────────
 
   {
@@ -86,10 +118,8 @@ async function crearIndices(db) {
     const col = db.collection(idx.coleccion);
     try {
       const nombre = await col.createIndex(idx.spec, idx.opciones);
-      // MongoDB devuelve el nombre si lo creó; si ya existía igual devuelve el nombre sin error
       resultados.creados.push({ nombre, coleccion: idx.coleccion });
     } catch (err) {
-      // IndexOptionsConflict o IndexKeySpecsConflict → ya existe con opciones distintas
       if (err.codeName === "IndexOptionsConflict" || err.codeName === "IndexKeySpecsConflict") {
         resultados.existentes.push({ nombre: idx.opciones.name, coleccion: idx.coleccion });
       } else {
