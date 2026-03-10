@@ -1,5 +1,7 @@
+// =====================================================
 // Servicio: Órdenes
 // Colección: ordenes
+// =====================================================
 
 const { getDb } = require("../db");
 
@@ -125,6 +127,8 @@ async function getDeliveredOrdersByRestaurant(restaurantId, page = 1, limit = 10
             fecha_pedido: 1,
             monto_total: 1,
             items: 1,
+            metodo_pago: 1,
+            direccion_entrega: 1,
           },
         }
       )

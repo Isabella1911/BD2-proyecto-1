@@ -1,3 +1,8 @@
+// =====================================================
+// Router principal
+// Reemplaza: src/router/AppRouter.jsx
+// =====================================================
+
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "../Layouts/MainLayout";
 import Home from "../pages/Home";
@@ -9,6 +14,8 @@ import OrderDetails from "../pages/OrderDetails";
 import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import RestaurantReviews from "../pages/RestaurantReviews";
+import RestaurantOrders from "../pages/RestaurantOrders";
+
 function AppRouter() {
   return (
     <Routes>
@@ -18,10 +25,11 @@ function AppRouter() {
         <Route path="history" element={<History />} />
         <Route path="settings" element={<Settings />} />
         <Route path="restaurants/:id" element={<RestaurantDetails />} />
+        <Route path="restaurants/:id/reviews" element={<RestaurantReviews />} />
+        <Route path="restaurants/:id/orders" element={<RestaurantOrders />} />
         <Route path="orders/:id" element={<OrderDetails />} />
         <Route path="cart" element={<Cart />} />
         <Route path="checkout" element={<Checkout />} />
-        <Route path="restaurants/:id/reviews" element={<RestaurantReviews />} />
       </Route>
     </Routes>
   );

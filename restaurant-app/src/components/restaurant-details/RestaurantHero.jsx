@@ -1,3 +1,9 @@
+// =====================================================
+// Componente: RestaurantHero
+// Reemplaza: src/components/restaurant-details/RestaurantHero.jsx
+// Cambio: agrega botón "Órdenes entregadas" al lado de "Ver reseñas"
+// =====================================================
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StarRating from "../common/StarRating";
@@ -15,12 +21,11 @@ function RestaurantHero({ restaurant }) {
   } = useReviews();
 
   const averageRating = getAverageRatingByRestaurantId(restaurant.id);
-  const reviewsCount = getReviewsCountByRestaurantId(restaurant.id);
-
+  const reviewsCount  = getReviewsCountByRestaurantId(restaurant.id);
   const displayRating = averageRating > 0 ? averageRating : restaurant.rating;
 
-  const handleSubmitReview = (reviewData) => {
-    const result = createReview({
+  const handleSubmitReview = async (reviewData) => {
+    const result = await createReview({
       restaurante_id: restaurant.id,
       restaurante_nombre: restaurant.name,
       orden_id: null,
@@ -51,33 +56,17 @@ function RestaurantHero({ restaurant }) {
         <img
           src={restaurant.image}
           alt={restaurant.name}
-          style={{
-            width: "100%",
-            height: "280px",
-            objectFit: "cover",
-          }}
+          style={{ width: "100%", height: "280px", objectFit: "cover" }}
         />
 
         <div style={{ padding: "1.5rem" }}>
-          <h1
-            style={{
-              color: "var(--color-primary)",
-              marginBottom: "0.75rem",
-            }}
-          >
+          <h1 style={{ color: "var(--color-primary)", marginBottom: "0.75rem" }}>
             {restaurant.name}
           </h1>
 
-          <p
-            style={{
-              color: "var(--color-muted)",
-              fontWeight: "bold",
-              marginBottom: "0.5rem",
-            }}
-          >
+          <p style={{ color: "var(--color-muted)", fontWeight: "bold", marginBottom: "0.5rem" }}>
             {restaurant.cuisine}
           </p>
-
           <p style={{ marginBottom: "0.5rem" }}>📍 {restaurant.address}</p>
           <p style={{ marginBottom: "0.75rem" }}>🕒 {restaurant.schedule}</p>
 
@@ -91,20 +80,38 @@ function RestaurantHero({ restaurant }) {
             {reviewsCount} reseña(s) · Toca las estrellas para dejar una reseña
           </p>
 
-          <button
-            onClick={() => navigate(`/restaurants/${restaurant.id}/reviews`)}
-            style={{
-              marginTop: "1rem",
-              padding: "0.9rem 1.1rem",
-              borderRadius: "var(--radius-md)",
-              border: "none",
-              backgroundColor: "var(--color-dark)",
-              color: "var(--color-bg)",
-              fontWeight: "bold",
-            }}
-          >
-            Ver reseñas
-          </button>
+          {/* Botones — Ver reseñas + Órdenes entregadas */}
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "1rem" }}>
+            <button
+              onClick={() => navigate(`/restaurants/${restaurant.id}/reviews`)}
+              style={{
+                padding: "0.9rem 1.1rem",
+                borderRadius: "var(--radius-md)",
+                border: "none",
+                backgroundColor: "var(--color-dark)",
+                color: "var(--color-bg)",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
+            >
+              Ver reseñas
+            </button>
+
+            <button
+              onClick={() => navigate(`/restaurants/${restaurant.id}/orders`)}
+              style={{
+                padding: "0.9rem 1.1rem",
+                borderRadius: "var(--radius-md)",
+                border: "2px solid var(--color-dark)",
+                backgroundColor: "transparent",
+                color: "var(--color-dark)",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
+            >
+              📦 Órdenes entregadas
+            </button>
+          </div>
         </div>
       </section>
 
