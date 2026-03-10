@@ -1,7 +1,6 @@
 // =====================================================
 // Página: Reseñas de un Restaurante
-// Actualiza: src/pages/RestaurantReviews.jsx
-// Cambio: paginación y sort vienen del backend ahora
+// Reemplaza: src/pages/RestaurantReviews.jsx
 // =====================================================
 
 import { useState, useEffect } from "react";
@@ -18,13 +17,13 @@ function RestaurantReviews() {
   const { id } = useParams();
   const { fetchReviewsByRestaurantId } = useReviews();
 
-  const [restaurant, setRestaurant] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [restaurant, setRestaurant]   = useState(null);
+  const [reviews, setReviews]         = useState([]);
+  const [total, setTotal]             = useState(0);
+  const [totalPages, setTotalPages]   = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortType, setSortType] = useState("recent");
-  const [isLoading, setIsLoading] = useState(true);
+  const [sortType, setSortType]       = useState("recent");
+  const [isLoading, setIsLoading]     = useState(true);
 
   const reviewsPerPage = 25;
 
@@ -51,15 +50,15 @@ function RestaurantReviews() {
     loadReviews();
   }, [id, currentPage, sortType]);
 
-  // Al cambiar el sort vuelve a página 1
   const handleSortChange = (newSort) => {
     setSortType(newSort);
     setCurrentPage(1);
   };
 
-  const averageRating = reviews.length
-    ? (reviews.reduce((sum, r) => sum + r.calificacion_num, 0) / reviews.length).toFixed(1)
-    : null;
+  const averageRating =
+    reviews.length
+      ? (reviews.reduce((sum, r) => sum + r.calificacion_num, 0) / reviews.length).toFixed(1)
+      : null;
 
   if (!restaurant) {
     return (

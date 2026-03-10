@@ -3,30 +3,44 @@
 // Reemplaza: src/context/ReviewsContext.jsx
 // =====================================================
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { currentUser } from "../data/currentUser";
 import {
   createReview as createReviewApi,
   deleteReview as deleteReviewApi,
   getReviewsByRestaurantId as getReviewsApi,
+  getReviewsByUserId,
 } from "../services/reviewService";
 
 const ReviewsContext = createContext();
 
 export function ReviewsProvider({ children }) {
-  // Cache local: { [restauranteId]: { reviews, total, page, totalPages } }
+  // Cache por restaurante: { [restauranteId]: { reviews, total, page, totalPages } }
   const [cache, setCache] = useState({});
+  // Reseñas del usuario actual para History.jsx
+  const [userReviews, setUserReviews] = useState([]);
+
+  // Carga las reseñas del usuario al montar
+  useEffect(() => {
+    async function loadUserReviews() {
+      try {
+        const data = await getReviewsByUserId(currentUser.id);
+        setUserReviews(data);
+      } catch (err) {
+        console.error("Error al cargar reseñas del usuario:", err);
+      }
+    }
+    loadUserReviews();
+  }, []);
 
   // ── Usado en RestaurantReviews.jsx ──────────────────
-  // Llama a la API y guarda en cache para no repetir la misma llamada
   const fetchReviewsByRestaurantId = async (restaurantId, page = 1, limit = 25, sort = "recent") => {
     const data = await getReviewsApi(restaurantId, page, limit, sort);
     setCache((prev) => ({ ...prev, [restaurantId]: data }));
     return data;
   };
 
-  // Para compatibilidad con componentes que ya usan getReviewsByRestaurantId
-  // devuelve del cache si existe, si no devuelve array vacío
+  // Para compatibilidad con componentes que leen del cache
   const getReviewsByRestaurantId = (restaurantId) => {
     return cache[restaurantId]?.reviews || [];
   };
@@ -35,7 +49,7 @@ export function ReviewsProvider({ children }) {
     const reviews = cache[restaurantId]?.reviews || [];
     if (!reviews.length) return 0;
     const total = reviews.reduce((sum, r) => sum + r.calificacion_num, 0);
-    return total / reviews.length;
+    return (total / reviews.length).toFixed(1);
   };
 
   const getReviewsCountByRestaurantId = (restaurantId) => {
@@ -43,11 +57,8 @@ export function ReviewsProvider({ children }) {
   };
 
   const hasUserReviewedOrder = (orderId) => {
-    // Revisa en todas las reseñas cacheadas
-    return Object.values(cache).some(({ reviews }) =>
-      reviews.some(
-        (r) => r.usuario_id === currentUser.id && r.orden_id === orderId
-      )
+    return userReviews.some(
+      (r) => r.usuario_id === currentUser.id && r.orden_id === orderId
     );
   };
 
@@ -59,7 +70,6 @@ export function ReviewsProvider({ children }) {
     calificacion_num,
     comentario,
   }) => {
-    // Validación local: evita doble reseña por orden
     if (orden_id !== null && hasUserReviewedOrder(orden_id)) {
       return { success: false, message: "Esta orden ya fue calificada." };
     }
@@ -73,7 +83,6 @@ export function ReviewsProvider({ children }) {
         comentario,
       });
 
-      // Agrega al cache local para reflejar el cambio sin recargar
       const normalized = {
         id: newReview._id,
         usuario_id: currentUser.id,
@@ -86,6 +95,10 @@ export function ReviewsProvider({ children }) {
         fecha: newReview.fecha,
       };
 
+      // Actualiza userReviews para que History.jsx lo refleje de inmediato
+      setUserReviews((prev) => [normalized, ...prev]);
+
+      // Actualiza cache del restaurante si ya estaba cargado
       setCache((prev) => {
         const existing = prev[restaurante_id] || { reviews: [], total: 0 };
         return {
@@ -107,7 +120,7 @@ export function ReviewsProvider({ children }) {
   // ── Usado en perfil de usuario ───────────────────────
   const deleteReview = async (reviewId, restauranteId) => {
     await deleteReviewApi(reviewId);
-
+    setUserReviews((prev) => prev.filter((r) => r.id !== reviewId));
     setCache((prev) => {
       const existing = prev[restauranteId] || { reviews: [], total: 0 };
       return {
@@ -124,6 +137,7 @@ export function ReviewsProvider({ children }) {
   return (
     <ReviewsContext.Provider
       value={{
+        userReviews,
         fetchReviewsByRestaurantId,
         getReviewsByRestaurantId,
         getAverageRatingByRestaurantId,

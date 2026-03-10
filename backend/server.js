@@ -11,6 +11,7 @@ const restaurantesRouter = require("./routes/restaurantes");
 const ordenesRouter      = require("./routes/ordenes");
 const reseniasRouter     = require("./routes/resenias");
 const statsRouter        = require("./routes/stats");
+const imagenesRouter     = require("./routes/imagenes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,7 @@ app.use("/api/restaurantes", restaurantesRouter);
 app.use("/api/ordenes",      ordenesRouter);
 app.use("/api/resenias",     reseniasRouter);
 app.use("/api/stats",        statsRouter);
+app.use("/api/imagenes",     imagenesRouter);
 
 // ── Arranque ──────────────────────────────────────────
 async function start() {
