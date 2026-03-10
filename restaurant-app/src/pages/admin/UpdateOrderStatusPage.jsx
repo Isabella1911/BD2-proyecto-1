@@ -1,9 +1,19 @@
+// =====================================================
+// Página: Cambiar estado de una orden
+// Ruta: /admin/update-order-status
+// Archivo: src/pages/admin/UpdateOrderStatusPage.jsx
+// =====================================================
+
 import { useState } from "react";
 import { updateOrderStatus } from "../../services/adminService";
 
+// Estados válidos según el backend (orderService.js):
+// "Pendiente" | "En Ruta" | "Entregado" | "Cancelado"
+const ESTADOS = ["Pendiente", "En Ruta", "Entregado", "Cancelado"];
+
 function UpdateOrderStatusPage() {
   const [orderId, setOrderId] = useState("");
-  const [estado, setEstado] = useState("");
+  const [estado, setEstado]   = useState("");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async () => {
@@ -34,14 +44,15 @@ function UpdateOrderStatusPage() {
         style={{ display: "block", marginBottom: "0.75rem", padding: "0.75rem", width: "360px" }}
       >
         <option value="">Selecciona estado</option>
-        <option value="pendiente">pendiente</option>
-        <option value="preparando">preparando</option>
-        <option value="en_camino">en_camino</option>
-        <option value="entregada">entregada</option>
-        <option value="cancelada">cancelada</option>
+        {ESTADOS.map((e) => (
+          <option key={e} value={e}>{e}</option>
+        ))}
       </select>
 
-      <button onClick={handleSubmit}>Actualizar</button>
+      <button onClick={handleSubmit} disabled={!orderId || !estado}>
+        Actualizar
+      </button>
+
       {message && <p>{message}</p>}
     </div>
   );

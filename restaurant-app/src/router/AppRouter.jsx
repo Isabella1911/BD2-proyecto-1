@@ -10,6 +10,7 @@ import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import RestaurantReviews from "../pages/RestaurantReviews";
 import LoginScreen from "../pages/LoginScreen";
+import RestaurantOrders from "../pages/RestaurantOrders";
 
 import AdminLayout from "../pages/admin/AdminLayout";
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -59,6 +60,7 @@ function AppRouter() {
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
           <Route path="restaurants/:id/reviews" element={<RestaurantReviews />} />
+          <Route path="restaurants/:id/orders" element={<RestaurantOrders />} />
         </Route>
       </Route>
 

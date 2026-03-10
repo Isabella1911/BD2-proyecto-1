@@ -13,6 +13,7 @@ const reseniasRouter     = require("./routes/resenias");
 const statsRouter        = require("./routes/stats");
 const imagenesRouter     = require("./routes/imagenes");
 const usuariosRouter     = require("./routes/usuarios");
+const adminRouter = require("./routes/admin");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.use("/api/resenias",     reseniasRouter);
 app.use("/api/stats",        statsRouter);
 app.use("/api/imagenes",     imagenesRouter);
 app.use("/api/usuarios",    usuariosRouter);
+app.use("/admin",   adminRouter);
 
 // ── Arranque ──────────────────────────────────────────
 async function start() {
