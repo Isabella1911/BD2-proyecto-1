@@ -68,7 +68,7 @@ function RestaurantHero({ restaurant }) {
             {restaurant.cuisine}
           </p>
           <p style={{ marginBottom: "0.5rem" }}>📍 {restaurant.address}</p>
-          <p style={{ marginBottom: "0.75rem" }}>🕒 {restaurant.schedule}</p>
+          <p style={{ marginBottom: "0.75rem" }}> {restaurant.schedule}</p>
 
           <StarRating
             rating={displayRating}
@@ -109,7 +109,7 @@ function RestaurantHero({ restaurant }) {
                 cursor: "pointer",
               }}
             >
-              📦 Órdenes entregadas
+               Órdenes entregadas
             </button>
           </div>
         </div>

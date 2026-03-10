@@ -62,9 +62,7 @@ function Navbar() {
             Historial
           </NavLink>
 
-          <NavLink to="/settings" style={navLinkStyle}>
-            Settings
-          </NavLink>
+          
 
           <NavLink to="/cart" style={navLinkStyle}>
             Carrito ({totalItems})

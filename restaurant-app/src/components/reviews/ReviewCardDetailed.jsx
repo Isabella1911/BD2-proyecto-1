@@ -36,7 +36,7 @@ function ReviewCardDetailed({ review }) {
             height: "fit-content",
           }}
         >
-          {"⭐".repeat(review.calificacion_num)}
+          {"★".repeat(review.calificacion_num)}
         </span>
       </div>
 

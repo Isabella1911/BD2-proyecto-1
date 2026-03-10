@@ -1,5 +1,7 @@
-function StarRating({ rating, onClick, clickable = false }) {
-  const rounded = Math.round(rating);
+function StarRating({ rating = 0, onClick, clickable = false }) {
+
+  const numericRating = Number(rating) || 0;
+  const rounded = Math.round(numericRating);
 
   return (
     <div
@@ -16,8 +18,9 @@ function StarRating({ rating, onClick, clickable = false }) {
           {star <= rounded ? "★" : "☆"}
         </span>
       ))}
+
       <span style={{ marginLeft: "0.4rem", fontWeight: "bold" }}>
-        {rating.toFixed(1)}
+        {numericRating.toFixed(1)}
       </span>
     </div>
   );

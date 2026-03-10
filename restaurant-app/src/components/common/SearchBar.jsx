@@ -19,7 +19,7 @@ function SearchBar({ value, onChange, placeholder = 'Buscar...' }) {
           color: 'var(--color-primary)',
         }}
       >
-        🔎
+        
       </span>
 
       <input
