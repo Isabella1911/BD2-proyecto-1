@@ -1,6 +1,7 @@
 // =====================================================
 // Página: Reseñas de un Restaurante
-// Reemplaza: src/pages/RestaurantReviews.jsx
+// Archivo: src/pages/RestaurantReviews.jsx
+// Cambio: agrega búsqueda por nombre de usuario
 // =====================================================
 
 import { useState, useEffect } from "react";
@@ -24,15 +25,14 @@ function RestaurantReviews() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortType, setSortType]       = useState("recent");
   const [isLoading, setIsLoading]     = useState(true);
+  const [searchName, setSearchName]   = useState("");   // ← búsqueda por nombre
 
   const reviewsPerPage = 25;
 
-  // Carga el restaurante una sola vez
   useEffect(() => {
     getRestaurantById(id).then(setRestaurant);
   }, [id]);
 
-  // Recarga reseñas cada vez que cambia página o sort
   useEffect(() => {
     async function loadReviews() {
       setIsLoading(true);
@@ -54,6 +54,13 @@ function RestaurantReviews() {
     setSortType(newSort);
     setCurrentPage(1);
   };
+
+  // Filtro local por nombre — no requiere nueva llamada al backend
+  const filteredReviews = searchName.trim()
+    ? reviews.filter((r) =>
+        r.usuario_nombre?.toLowerCase().includes(searchName.toLowerCase())
+      )
+    : reviews;
 
   const averageRating =
     reviews.length
@@ -81,16 +88,47 @@ function RestaurantReviews() {
 
       <ReviewSortFilter sortType={sortType} onSortChange={handleSortChange} />
 
+      {/* Búsqueda por nombre */}
+      <input
+        type="text"
+        value={searchName}
+        onChange={(e) => setSearchName(e.target.value)}
+        placeholder="Buscar por nombre de usuario..."
+        style={{
+          display: "block",
+          width: "100%",
+          padding: "0.75rem 1rem",
+          marginBottom: "1rem",
+          borderRadius: "var(--radius-md)",
+          border: "2px solid var(--color-muted)",
+          backgroundColor: "#fffaf0",
+          color: "var(--color-dark)",
+          fontSize: "1rem",
+          boxSizing: "border-box",
+          outline: "none",
+        }}
+      />
+
       {isLoading ? (
         <LoadingSpinner text="Cargando reseñas..." />
       ) : (
         <>
-          <ReviewList reviews={reviews} />
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
+          {filteredReviews.length === 0 ? (
+            <p style={{ color: "var(--color-muted)", textAlign: "center", marginTop: "2rem" }}>
+              No se encontraron reseñas para "{searchName}".
+            </p>
+          ) : (
+            <ReviewList reviews={filteredReviews} />
+          )}
+
+          {/* Solo muestra paginación si no hay búsqueda activa */}
+          {!searchName.trim() && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </>
       )}
     </div>
